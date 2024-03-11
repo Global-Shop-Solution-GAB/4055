@@ -1,0 +1,255 @@
+Program.Sub.ScreenSU.Start
+gui.Form1..create
+gui.Form1..caption("Select User")
+gui.Form1..size(4650,3720)
+gui.Form1..minx(0)
+gui.Form1..miny(0)
+gui.Form1..position(0,0)
+gui.Form1..event(unload,form1_unload)
+gui.Form1..alwaysontop(False)
+gui.Form1..fontname("Arial")
+gui.Form1..fontsize(8)
+gui.Form1..forecolor(0)
+gui.Form1..fontstyle(,,,,)
+gui.Form1..BackColor(-2147483633)
+gui.Form1..controlbox(True)
+gui.Form1..maxbutton(True)
+gui.Form1..minbutton(True)
+gui.Form1..mousepointer(0)
+gui.Form1..moveable(True)
+gui.Form1..sizeable(False)
+gui.Form1..ShowInTaskBar(True)
+gui.Form1..titlebar(True)
+gui.Form1.gsflexgrid1.create(gsflexgrid)
+gui.Form1.gsflexgrid1.FixedRows(0)
+gui.Form1.gsflexgrid1.FixedCols(0)
+gui.Form1.gsflexgrid1.visible(True)
+gui.Form1.gsflexgrid1.size(4365,2925)
+gui.Form1.gsflexgrid1.zorder(0)
+gui.Form1.gsflexgrid1.position(0,100)
+gui.Form1.gsflexgrid1.enabled(True)
+gui.Form1.gsflexgrid1.event(commandclick,gsflexgrid1_commandclick)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sRet.Declare(String)
+'Est/Routing & Quote Management > Quick Quote > Open/New
+
+F.Intrinsic.Control.SelectCase(V.Caller.Hook)
+	F.Intrinsic.Control.Case(10710)
+	'Needs to work with "O", "N"
+		F.Intrinsic.Control.SelectCase(V.Caller.Switches)
+			F.Intrinsic.Control.Case("O")
+				'Position X
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PL","728")
+				'Position Y
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PT","393")
+				'Width
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PW","40")
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-1,"HIDE",0)
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-1,"LOCK",0)
+				V.Passed.GAB-BTN-1.Set("Users")
+			F.Intrinsic.Control.Case("N")
+				'Position X
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PL","728")
+				'Position Y
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PT","393")
+				'Width
+				F.Intrinsic.Variable.SetProperty("GAB-BTN-1","PW","40")
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-1,"HIDE",0)
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-1,"LOCK",0)
+				V.Passed.GAB-BTN-1.Set("Users")
+			F.Intrinsic.Control.EndSelect
+
+	F.Intrinsic.Control.Case(10987)
+		'Once Script 1 button is fired
+		'Add custom browser below displaying 	First Name, last name and groupd by ID. Pass username to Created by Field.
+		F.Intrinsic.Control.If(V.Passed.000003,=,"")
+			F.Intrinsic.UI.Msgbox("Please select a quote","Unable to Load")
+			F.Intrinsic.Control.ExitSub
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.Passed.000003,=,0)
+			F.Intrinsic.UI.Msgbox("Please select a quote","Unable to Load")
+			F.Intrinsic.Control.ExitSub
+		F.Intrinsic.Control.EndIf
+		
+		F.Intrinsic.Control.CallSub(Browser)
+		
+F.Intrinsic.Control.EndSelect
+	
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4055_CreatedByBrwser.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Browser.Start
+F.Intrinsic.Control.SetErrorHandler("Browser_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+V.Local.sSQL.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sGroup.Declare(String)
+V.Local.sName.Declare(String)
+V.Local.sNames.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.sTemp.Declare(String)
+V.Local.sBrsRet.Declare(String)
+V.Local.iWidths.Declare(Long)
+V.Local.iRet.Declare(Long)
+V.Local.iRows.Declare(Long)
+V.Local.iC.Declare(Long)
+V.Local.i.Declare(Long)
+
+'GroupIDis681
+'Gets group name from the group ID
+F.Global.Security.getgroupnamefromgroupid(681,V.Local.sGroup)
+
+'Returns members based on group name
+F.Global.Security.GetGroupMembers(V.Local.sGroup,V.Caller.CompanyCode,V.Local.sRet)
+
+F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+F.Intrinsic.Variable.UBound(V.Local.sRet,V.Local.iRet)
+
+'If no members found
+F.Intrinsic.Control.If(V.Local.sGroup,=,"***NORETURN***")
+	F.Intrinsic.UI.Msgbox("No members found for Group ID","No members found")
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndIf
+
+'If only one member found
+
+F.Intrinsic.Control.If(V.Local.iRet,=,0)
+	F.Global.Security.GetFullName(V.Local.sRet,V.Local.sName)
+
+	Gui.Form1.gsflexgrid1.Cols(3)
+	Gui.Form1.gsflexgrid1.Rows(2)
+	
+	Gui.Form1.gsflexgrid1.ColWidth(0,1000)
+	Gui.Form1.gsflexgrid1.ColWidth(1,2200)
+	Gui.Form1.gsflexgrid1.ColWidth(2,1000)
+	Gui.Form1.gsflexgrid1.BuildStyle(1,0,"Type","Command","Select")
+	Gui.Form1.gsflexgrid1.BuildStyle(1,1,"Type","Locked","True")
+	Gui.Form1.gsflexgrid1.BuildStyle(1,2,"Type","Locked","True")
+
+
+	Gui.Form1.gsflexgrid1.TextMatrix(2,0,V.Local.sRet)
+	Gui.Form1.gsflexgrid1.TextMatrix(1,0,V.Local.sName)
+	Gui.Form1.gsflexgrid1.ApplyStyle(0,1)
+	Gui.Form1..Show
+	
+F.Intrinsic.Control.EndIf
+
+'if multiple members found
+'Use for loop with iRet as ubound
+F.Intrinsic.Control.If(V.Local.iRet,>,0)
+	Gui.Form1.gsflexgrid1.Cols(3)
+	F.Intrinsic.Math.Add(V.Local.iRet,1,V.Local.iRet)
+	Gui.Form1.gsflexgrid1.Rows(V.Local.iRet)
+	Gui.Form1.gsflexgrid1.ColWidth(0,1000)
+	Gui.Form1.gsflexgrid1.ColWidth(1,2200)
+	Gui.Form1.gsflexgrid1.ColWidth(2,1000)
+	Gui.Form1.gsflexgrid1.BuildStyle(1,0,"Type","Command","Select")
+	Gui.Form1.gsflexgrid1.BuildStyle(1,1,"Type","Locked","True")
+	Gui.Form1.gsflexgrid1.BuildStyle(1,2,"Type","Locked","True")
+
+	F.Intrinsic.Control.For(V.Local.iC,0,V.Local.iRet,1)
+		F.Global.Security.GetFullName(V.Local.sRet(V.Local.i),V.Local.sName)
+		Gui.Form1.gsflexgrid1.TextMatrix(1,V.Local.iRows,V.Local.sName)
+		Gui.Form1.gsflexgrid1.TextMatrix(2,V.Local.iRows,V.Local.sRet(V.Local.i))
+		Gui.Form1.gsflexgrid1.ApplyStyle(V.Local.iRows,1)
+		F.Intrinsic.Math.Add(V.Local.iRows,1,V.Local.iRows)
+		F.Intrinsic.Math.Add(V.Local.i,1,V.Local.i)
+		F.Intrinsic.Control.If(V.Local.iRows,=,V.Local.iRet)
+			F.Intrinsic.Control.ExitFor(V.Local.iC)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.iC)
+	Gui.Form1..Show
+
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Browser_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4055_CreatedByBrwser.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Browser.End
+
+program.sub.gsflexgrid1_commandclick.start
+F.Intrinsic.Control.SetErrorHandler("gsflexgrid1_commandclick_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+V.Local.iKey.Declare(Long)
+V.Local.iRow.Declare(Long)
+V.Local.sRow.Declare(String)
+'F.Intrinsic.Debug.InvokeDebugger
+'F.Intrinsic.Debug.Stop
+
+V.Local.iRow.Set(V.Args.Key)
+Gui.Form1.gsflexgrid1.ReadRow(V.Local.iRow,V.Local.sRow)
+F.Intrinsic.String.Split(V.Local.sRow,"*!*",V.Local.sRow)
+V.Passed.000092.Set(V.Local.sRow(2))
+F.Intrinsic.Control.CallSub(Form1_unload)
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("gsflexgrid1_commandclick_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4055_CreatedByBrwser.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.gsflexgrid1_commandclick.end
+
+program.sub.form1_unload.start
+F.Intrinsic.Control.SetErrorHandler("form1_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+F.Intrinsic.Control.End
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("form1_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4055_CreatedByBrwser.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.form1_unload.end
+
+Program.Sub.Comments.Start
+${$0$}$$}$AGM$}$12/25/2014 2:43:44 PM
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Project for Quote 6267
+Program.Sub.Comments.End
+
